@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
+import noteRoutes from './routes/noteRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,9 @@ const NOTES_DIR = path.join(__dirname, 'notes');
 
 // Middleware
 app.use(express.json());
+
+// Routes
+app.use('/api/v1/notes', noteRoutes);
 
 const initializeApp = async () => {
   try {

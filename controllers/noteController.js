@@ -1,0 +1,36 @@
+import path from 'path';
+import { promises as fs } from 'fs';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const NOTES_DIR = path.join(__dirname, '../notes');
+
+export const uploadNote = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileName = req.file.originalname;
+    const filePath = path.join(NOTES_DIR, fileName);
+
+    if (existsSync(filePath)) {
+      return res.status(409).json({
+        error: `File ${fileName} already exists.`,
+      });
+    }
+
+    await fs.mkdir(NOTES_DIR);
+    await fs.writeFile(filePath, req.file.buffer);
+
+    res.status(201).json({
+      message: 'Markdown file uploaded and saved successfully',
+      file: fileName,
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ error: 'Failed to upload and save file' });
+  }
+};
