@@ -34,3 +34,25 @@ export const uploadNote = async (req, res) => {
     res.status(500).json({ error: 'Failed to upload and save file' });
   }
 };
+
+export const listNotes = async (req, res) => {
+  try {
+    if (!existsSync(NOTES_DIR)) {
+      return res.json({
+        message: 'No notes found',
+        notes: [],
+      });
+    }
+
+    const files = await fs.readdir(NOTES_DIR);
+    const markdownFiles = files.filter((file) => file.endsWith('.md'));
+
+    res.json({
+      message: `Found ${markdownFiles.length} notes`,
+      notes: markdownFiles,
+    });
+  } catch (error) {
+    console.error('Error listing notes:', error);
+    res.status(500).json({ error: 'Failed to list notes' });
+  }
+};
