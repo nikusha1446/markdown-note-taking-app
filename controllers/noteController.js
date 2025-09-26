@@ -3,6 +3,7 @@ import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { marked } from 'marked';
+import writeGood from 'write-good';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,8 +66,6 @@ export const getNote = async (req, res) => {
     const fileName = file.endsWith('.md') ? file : file + '.md';
     const filePath = path.join(NOTES_DIR, fileName);
 
-    console.log(filePath);
-
     if (!existsSync(filePath)) {
       return res.status(404).json({
         error: `Note ${fileName} not found`,
@@ -83,5 +82,38 @@ export const getNote = async (req, res) => {
   } catch (error) {
     console.error('Error getting note:', error);
     res.status(500).json({ error: 'Failed to get note' });
+  }
+};
+
+export const checkNoteGrammar = async (req, res) => {
+  try {
+    const { file } = req.params;
+
+    const fileName = file.endsWith('.md') ? file : file + '.md';
+    const filePath = path.join(NOTES_DIR, fileName);
+
+    if (!existsSync(filePath)) {
+      return res.status(404).json({
+        error: `Note ${fileName} not found`,
+      });
+    }
+
+    const markdownContent = await fs.readFile(filePath, 'utf8');
+
+    const plainText = markdownContent
+      .replace(/[#*_`]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+      .trim();
+
+    const suggestions = writeGood(plainText);
+    res.status(200).json({
+      fileName,
+      issues: suggestions,
+      status: suggestions.length === 0 ? 'No issues found' : 'Issues detected',
+    });
+  } catch (error) {
+    console.error('Error checking grammar:', error);
+    res.status(500).json({ error: 'Failed to check grammar' });
   }
 };
