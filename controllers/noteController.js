@@ -2,6 +2,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { marked } from 'marked';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,5 +55,33 @@ export const listNotes = async (req, res) => {
   } catch (error) {
     console.error('Error listing notes:', error);
     res.status(500).json({ error: 'Failed to list notes' });
+  }
+};
+
+export const getNote = async (req, res) => {
+  try {
+    const { file } = req.params;
+
+    const fileName = file.endsWith('.md') ? file : file + '.md';
+    const filePath = path.join(NOTES_DIR, fileName);
+
+    console.log(filePath);
+
+    if (!existsSync(filePath)) {
+      return res.status(404).json({
+        error: `Note ${fileName} not found`,
+      });
+    }
+
+    const markDownContent = await fs.readFile(filePath, 'utf8');
+    const htmlContent = marked(markDownContent);
+
+    res.status(200).json({
+      fileName,
+      htmlContent,
+    });
+  } catch (error) {
+    console.error('Error getting note:', error);
+    res.status(500).json({ error: 'Failed to get note' });
   }
 };
