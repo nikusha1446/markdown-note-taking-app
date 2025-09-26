@@ -22,7 +22,7 @@ export const uploadNote = async (req, res) => {
       });
     }
 
-    await fs.mkdir(NOTES_DIR);
+    await fs.mkdir(NOTES_DIR, { recursive: true });
     await fs.writeFile(filePath, req.file.buffer);
 
     res.status(201).json({
